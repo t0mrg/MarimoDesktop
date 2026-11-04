@@ -8,6 +8,8 @@ final class AppModel {
     var environmentStatus: EnvironmentStatus = .unknown
     var setupLog: [String] = []
     var setupStep = ""
+    var sessions: [NotebookSession] = []
+    var selectedID: UUID?
 
     let paths: AppPaths
     let environment: PythonEnvironment
@@ -27,6 +29,7 @@ final class AppModel {
         pidRegistry.reap(isMarimo: PIDRegistry.systemIsMarimo, terminate: PIDRegistry.systemTerminate)
         environmentStatus = await environment.currentStatus()
         if environmentStatus == .missing { await install() }
+        if isReady && sessions.isEmpty { restoreSession() }
     }
 
     func install(upgrade: Bool = false) async {
@@ -42,6 +45,7 @@ final class AppModel {
             }
             environmentStatus = await environment.currentStatus()
             if environmentStatus == .missing { environmentStatus = .failed("Marimo could not be imported after install.") }
+            else if sessions.isEmpty { restoreSession() }
         } catch {
             environmentStatus = .failed(error.localizedDescription)
         }

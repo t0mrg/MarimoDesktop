@@ -43,9 +43,9 @@ MarimoDesktop (executable, SwiftUI App)
 
 ### 4.2 Tabs (FR-TAB)
 - FR-TAB-1: Multiple notebooks open in tabs in a single window. Tabs can be reordered, closed with ⌘W and cycled with ⌃⇥ / ⌘⇧[ ⌘⇧].
-- FR-TAB-2: Each tab shows the file name, a dirty indicator, and a status (starting, running, error).
+- FR-TAB-2: Each tab shows the file name and a status (starting, running, error). Marimo autosaves after 1 s, so there is no separate dirty indicator.
 - FR-TAB-3: Opening a file already open focuses its tab.
-- FR-TAB-4: Closing a tab with unsaved changes prompts to save, discard or cancel.
+- FR-TAB-4: Closing a tab saves it first. Untitled notebooks with content prompt to Save As, Discard or Cancel.
 - FR-TAB-5: Open tabs restore on relaunch (the file list is persisted).
 
 ### 4.3 File operations (FR-FILE)
