@@ -34,3 +34,10 @@ Append-only log of stages and key decisions. Format: `## YYYY-MM-DD — title`.
 - **Integration test passes against real marimo:** a test plays the primary web view, runs a cell via `/api/kernel/run`, and the Swift mirror receives `answer = 42 : int`.
 - **Decision: start the mirror from `WKNavigationDelegate.didFinish`** so the primary session exists before the kiosk joins (kiosk first would be rejected). The mirror also retries every second, so a transient failure heals itself.
 - Variables are sorted by name with underscore-private names last. Value previews are marimo's own strings, so large objects are already truncated server-side.
+
+## 2026-11-04 — Stage 5 finished: Git plugin
+- GitClient (async, array-args only, `GIT_TERMINAL_PROMPT=0`), GitParser (porcelain v2 `-z` status, log), GitModel + sidebar: branch menu, ahead/behind, Staged/Changes/Conflicts sections, per-file and bulk stage/unstage, discard with confirmation, coloured diff sheet, commit box (⌘↩), history tab, pull/push, Initialise Repository.
+- A real-repo workflow test (init → stage → unstage on unborn HEAD → commit → modify → diff → discard → branch switch) passes alongside parser fixtures. 24 tests total.
+- **Decision: unstage on an unborn branch uses `git rm --cached`** because `restore --staged` needs a HEAD.
+- **Decision: `pull --ff-only`** so the GUI never silently creates merge commits or drops into a conflict state; push retries with `-u origin HEAD` if there is no upstream.
+- **Decision: refresh the panel every 5 s plus on app activation and notebook switch**, rather than watching the filesystem. Cheap, and it also picks up autosaves.

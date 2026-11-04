@@ -5,7 +5,23 @@ struct MainView: View {
     @Bindable var model: AppModel
     @AppStorage("showInspector") private var showInspector = true
 
+    @State private var git = GitModel()
+    @State private var columns: NavigationSplitViewVisibility = .all
+
     var body: some View {
+        NavigationSplitView(columnVisibility: $columns) {
+            GitView(git: git).navigationSplitViewColumnWidth(min: 240, ideal: 280, max: 400)
+        } detail: { detail }
+        .task(id: model.selectedSession?.file) { await git.setDirectory(model.selectedSession?.file.deletingLastPathComponent()) }
+        .task {   // pick up saves and external commits without user action (FR-GIT-8)
+            while !Task.isCancelled { try? await Task.sleep(for: .seconds(5)); await git.refresh() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            Task { await git.refresh() }
+        }
+    }
+
+    private var detail: some View {
         VStack(spacing: 0) {
             if !model.sessions.isEmpty { TabBar(model: model) }
             ZStack {

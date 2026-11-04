@@ -10,8 +10,8 @@ Status: ☐ todo · ◐ in progress · ☑ done
 | 2 | Python environment and Marimo server manager | ☑ |
 | 3 | Tabs, web view, New / Open / Save As | ☑ |
 | 4 | Variable browser (kiosk mirror) | ☑ |
-| 5 | Git plugin | ◐ |
-| 6 | Polish, persistence, lifecycle hardening | ☐ |
+| 5 | Git plugin | ☑ |
+| 6 | Polish, persistence, lifecycle hardening | ◐ |
 | 7 | End-to-end verification, release build, handoff | ☐ |
 
 ## Stage 0 — Documentation and repository
