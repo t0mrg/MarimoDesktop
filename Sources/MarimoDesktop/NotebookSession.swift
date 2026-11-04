@@ -15,6 +15,9 @@ final class NotebookSession: Identifiable {
     let webView: WKWebView
     private let navigationDelegate = NavigationGuard()
     private var startTask: Task<Void, Never>?
+    private var mirror: VariableMirror?
+    private(set) var variables: [Variable] = []
+    private(set) var variableTable = VariableTable()
     var log: [String] { server?.log.all ?? [] }
 
     var title: String { file.deletingPathExtension().lastPathComponent }
@@ -25,11 +28,14 @@ final class NotebookSession: Identifiable {
         webView = WKWebView(frame: .zero, configuration: config)
         webView.isInspectable = true
         webView.navigationDelegate = navigationDelegate
+        navigationDelegate.onFinish = { [weak self] in self?.startMirror() }
         webView.setValue(false, forKey: "drawsBackground")
     }
 
     func start(paths: AppPaths, registry: PIDRegistry) {
         state = .starting
+        stopMirror()
+        variables = []
         startTask?.cancel()
         let file = file
         startTask = Task { [weak self] in
@@ -59,13 +65,26 @@ final class NotebookSession: Identifiable {
         start(paths: paths, registry: registry)
     }
 
+    /// Starts mirroring once the web view has loaded, so the primary session exists first.
+    private func startMirror() {
+        guard let server, mirror == nil else { return }
+        let mirror = VariableMirror(port: server.port, file: file) { [weak self] vars, table in
+            Task { @MainActor in self?.variables = vars; self?.variableTable = table }
+        }
+        self.mirror = mirror
+        mirror.start()
+    }
+
+    private func stopMirror() { mirror?.stop(); mirror = nil }
+
     func stop() {
+        stopMirror()
         startTask?.cancel()
         server?.terminate()
         server = nil
     }
 
-    func stopAndWait() { startTask?.cancel(); server?.terminateAndWait() }
+    func stopAndWait() { stopMirror(); startTask?.cancel(); server?.terminateAndWait() }
 
     /// Asks marimo's own frontend to save (⌘S). It owns the unsaved cell edits.
     func requestSave() async {
@@ -78,6 +97,11 @@ final class NotebookSession: Identifiable {
 /// Keeps the web view on its own loopback origin; everything else opens in the default browser.
 final class NavigationGuard: NSObject, WKNavigationDelegate {
     nonisolated(unsafe) var allowedPort: Int = 0
+    nonisolated(unsafe) var onFinish: (@MainActor () -> Void)?
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        MainActor.assumeIsolated { onFinish?() }
+    }
 
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
                  decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void) {

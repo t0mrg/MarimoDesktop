@@ -28,3 +28,9 @@ Append-only log of stages and key decisions. Format: `## YYYY-MM-DD — title`.
 - **Bug found by smoke test:** AppKit synthesised File ▸ New on a cold launch, creating a stray Untitled file. Fixed with `applicationShouldOpenUntitledFile = false` and an `isReady` guard. Multi-file Finder open was losing all but one file with `onOpenURL`. Moved to `application(_:open:)` with a pending queue for cold launches.
 - **Smoke-tested for real:** the app builds a venv in Application Support, launches a server per file, and the WKWebView holds live connections to it. Quitting leaves zero marimo processes.
 - Note: the venv path contains a space ("Application Support"), so pip's console-script shebang is invalid and a `/bin/sh` trampoline runs. It works, and the PID tracked is the real server because the trampoline execs.
+
+## 2026-11-04 — Stage 4 finished: variable browser
+- VariableTable (pure message folding; fixtures from live marimo), VariableMirror (URLSessionWebSocketTask kiosk client with retry loop), inspector UI (filter, type badge, cell number, click-to-copy, empty states), ⌥⌘I toggle.
+- **Integration test passes against real marimo:** a test plays the primary web view, runs a cell via `/api/kernel/run`, and the Swift mirror receives `answer = 42 : int`.
+- **Decision: start the mirror from `WKNavigationDelegate.didFinish`** so the primary session exists before the kiosk joins (kiosk first would be rejected). The mirror also retries every second, so a transient failure heals itself.
+- Variables are sorted by name with underscore-private names last. Value previews are marimo's own strings, so large objects are already truncated server-side.

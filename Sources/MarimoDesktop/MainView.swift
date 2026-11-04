@@ -3,7 +3,7 @@ import MarimoCore
 
 struct MainView: View {
     @Bindable var model: AppModel
-    @AppStorage("showSidebar") private var showSidebar = true
+    @AppStorage("showInspector") private var showInspector = true
 
     var body: some View {
         VStack(spacing: 0) {
@@ -17,6 +17,15 @@ struct MainView: View {
             }
         }
         .background(.background)
+        .inspector(isPresented: $showInspector) {
+            VariablesView(session: model.selectedSession).inspectorColumnWidth(min: 240, ideal: 300, max: 480)
+        }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button { showInspector.toggle() } label: { Label("Variables", systemImage: "sidebar.trailing") }
+                    .help("Show or hide the variable browser (⌥⌘I)").keyboardShortcut("i", modifiers: [.command, .option])
+            }
+        }
     }
 }
 
