@@ -8,3 +8,7 @@ Append-only log of stages and key decisions. Format: `## YYYY-MM-DD — title`.
 - **Decision: one `marimo edit` process per tab** rather than a single multi-file server. Alternatives: a shared server with `?file=` routing (lighter, but kernels share a process tree and the variable mirror is harder to scope). Per-tab gives clean isolation and clean teardown.
 - **Decision: variable browser via Marimo kiosk-mode WebSocket** (`/ws?kiosk=true`), verified present in marimo 0.25.2 source (`ws_connection_validator.py`). This replaces "kernel hook" injection with an official mirroring mechanism, with no patching. The fallback is a PYTHONPATH bootstrap module.
 - Docs created: SPECIFICATION.md, WORKPLAN.md, AGENTS.md, SKILLS.md.
+
+## 2026-11-04 — Stage 1 finished: skeleton
+- Package (MarimoCore lib, MarimoDesktop exe, tests), Info.plist, entitlements, `scripts/build_app.sh` (ad-hoc signed .app) all work.
+- **Decision: Swift Testing, not XCTest.** With Command Line Tools only, `XCTest` is absent. `Testing.framework` exists but is off SwiftPM's search path, so `scripts/test.sh` passes `-F`/`-rpath` flags. Use `scripts/test.sh`, not bare `swift test`.

@@ -25,7 +25,7 @@ Step-by-step playbooks. Follow the matching one instead of improvising. All rule
 - Stream stdout/stderr to the UI log. A non-zero exit becomes a typed error carrying the last 20 log lines.
 
 ## Skill 4 — Testing
-- Unit: `swift test` (fast, offline). Pure parsers with fixture strings. Fake `ProcessRunner` for command assertions.
+- Unit: `scripts/test.sh` (fast, offline). Pure parsers with fixture strings. Fake `ProcessRunner` for command assertions.
 - Integration: `MARIMO_INTEGRATION=1 swift test` launches real marimo in a temp venv.
 - Git: create a temp dir, `git init`, and drive `GitClient` against it. Always clean up.
 - App smoke test: `scripts/build_app.sh`, `open build/MarimoDesktop.app`, check `pgrep -fl marimo` while it runs, quit, and confirm that none remain.
