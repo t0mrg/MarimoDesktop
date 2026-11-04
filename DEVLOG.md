@@ -12,3 +12,10 @@ Append-only log of stages and key decisions. Format: `## YYYY-MM-DD — title`.
 ## 2026-11-04 — Stage 1 finished: skeleton
 - Package (MarimoCore lib, MarimoDesktop exe, tests), Info.plist, entitlements, `scripts/build_app.sh` (ad-hoc signed .app) all work.
 - **Decision: Swift Testing, not XCTest.** With Command Line Tools only, `XCTest` is absent. `Testing.framework` exists but is off SwiftPM's search path, so `scripts/test.sh` passes `-F`/`-rpath` flags. Use `scripts/test.sh`, not bare `swift test`.
+
+## 2026-11-04 — Stage 2 finished: environment + server manager
+- Added AppPaths, ProcessRunner (line-streaming), PythonEnvironment (uv preferred, python -m venv fallback), PortAllocator, PIDRegistry (orphan reaping), MarimoServer (spawn + /health poll + token parse), AppModel and SetupView.
+- 9 unit tests plus a real integration test (`MARIMO_INTEGRATION=1`) that builds a venv, installs marimo and starts a server. All pass.
+- **Decision: build products go to `~/.cache/marimodesktop-build`** (`--scratch-path`). The repo sits on a shared-folder volume with unreliable mtimes, which made SwiftPM fail with "input file was modified during the build".
+- **Protocol verified live (marimo 0.25.2):** kiosk WS `ws://127.0.0.1:P/ws?session_id=…&file=<abs path>&kiosk=true` receives `kernel-ready` (resumed:true), then `variables` `{name, declared_by, used_by}` and `variable-values` `{name, value, datatype}`, all wrapped as `{"op":…,"data":{…}}`. The primary session must connect first. HTTP API calls need the `Marimo-Server-Token` header (token embedded in index HTML as `serverToken`) and a `Marimo-Session-Id` header.
+- Missing uv and python is reported with install guidance. We do not auto-download uv (out of scope).

@@ -2,8 +2,9 @@
 # Builds a release binary and assembles an ad-hoc signed MarimoDesktop.app in build/.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-swift build -c release
-BIN="$(swift build -c release --show-bin-path)/MarimoDesktop"
+SCRATCH="${MD_BUILD_DIR:-$HOME/.cache/marimodesktop-build}"
+swift build -c release --scratch-path "$SCRATCH"
+BIN="$(swift build -c release --scratch-path "$SCRATCH" --show-bin-path)/MarimoDesktop"
 APP="build/MarimoDesktop.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"

@@ -7,8 +7,8 @@ Status: ☐ todo · ◐ in progress · ☑ done
 |---|---|---|
 | 0 | Documentation and repository | ☑ |
 | 1 | Package skeleton, app shell, build script | ☑ |
-| 2 | Python environment and Marimo server manager | ◐ |
-| 3 | Tabs, web view, New / Open / Save As | ☐ |
+| 2 | Python environment and Marimo server manager | ☑ |
+| 3 | Tabs, web view, New / Open / Save As | ◐ |
 | 4 | Variable browser (kiosk mirror) | ☐ |
 | 5 | Git plugin | ☐ |
 | 6 | Polish, persistence, lifecycle hardening | ☐ |
