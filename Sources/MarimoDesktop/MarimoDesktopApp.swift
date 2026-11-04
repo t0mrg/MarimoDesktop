@@ -40,6 +40,7 @@ struct MarimoDesktopApp: App {
         }
         .windowToolbarStyle(.unified)
         .commands { AppCommands(model: model) }
+        Settings { SettingsView(model: model) }
     }
 }
 
@@ -65,6 +66,10 @@ struct AppCommands: Commands {
                 .keyboardShortcut("s").disabled(model.selectedSession == nil)
             Button("Save As…") { Task { await model.saveSelectedAs() } }
                 .keyboardShortcut("s", modifiers: [.command, .shift]).disabled(model.selectedSession == nil)
+        }
+        CommandGroup(replacing: .help) {
+            Link("Marimo Documentation", destination: URL(string: "https://docs.marimo.io")!)
+            Button("Reveal Application Support Folder") { NSWorkspace.shared.activateFileViewerSelecting([model.paths.root]) }
         }
         CommandGroup(after: .windowArrangement) {
             Button("Show Next Tab") { model.selectNext(1) }.keyboardShortcut("]", modifiers: [.command, .shift])

@@ -48,7 +48,8 @@ public final class MarimoServer: @unchecked Sendable {
                 try await server.waitUntilReady(timeout: readyTimeout)
                 return server
             } catch {
-                server.terminate()
+                server.terminateAndWait()
+                if error is CancellationError || Task.isCancelled { throw CancellationError() }  // tab closed / app quitting mid-start
                 lastError = error
                 if case ServerError.timedOut = error { break }
             }

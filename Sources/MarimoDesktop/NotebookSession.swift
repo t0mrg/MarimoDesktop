@@ -52,6 +52,8 @@ final class NotebookSession: Identifiable {
                 }
                 self.state = .running
                 self.webView.load(URLRequest(url: server.url))
+            } catch is CancellationError {
+                return
             } catch {
                 self?.state = .failed(error.localizedDescription)
             }

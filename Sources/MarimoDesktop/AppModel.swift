@@ -32,11 +32,11 @@ final class AppModel {
         if isReady && sessions.isEmpty { restoreSession() }
     }
 
-    func install(upgrade: Bool = false) async {
+    func install(upgrade: Bool = false, extraPackages: [String] = []) async {
         environmentStatus = .installing(step: "Preparing…")
         setupLog = []
         do {
-            try await environment.install(upgrade: upgrade) { [weak self] step, line in
+            try await environment.install(extraPackages: extraPackages, upgrade: upgrade) { [weak self] step, line in
                 Task { @MainActor in
                     guard let self else { return }
                     if !step.isEmpty { self.setupStep = step; self.environmentStatus = .installing(step: step) }
@@ -49,5 +49,14 @@ final class AppModel {
         } catch {
             environmentStatus = .failed(error.localizedDescription)
         }
+    }
+
+    /// Deletes the venv and builds it again. Open notebooks are restarted afterwards.
+    func rebuildEnvironment() async {
+        let open = sessions
+        open.forEach { $0.stop() }
+        try? FileManager.default.removeItem(at: paths.venv)
+        await install()
+        if isReady { open.forEach { $0.start(paths: paths, registry: pidRegistry) } }
     }
 }

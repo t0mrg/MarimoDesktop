@@ -41,3 +41,19 @@ Append-only log of stages and key decisions. Format: `## YYYY-MM-DD — title`.
 - **Decision: unstage on an unborn branch uses `git rm --cached`** because `restore --staged` needs a HEAD.
 - **Decision: `pull --ff-only`** so the GUI never silently creates merge commits or drops into a conflict state; push retries with `-u origin HEAD` if there is no upstream.
 - **Decision: refresh the panel every 5 s plus on app activation and notebook switch**, rather than watching the filesystem. Cheap, and it also picks up autosaves.
+
+## 2026-11-04 — Stage 6 finished: polish and hardening
+- Settings window (Marimo version, Update, Rebuild Environment, extra packages, tool locations, last error), Help menu, generated app icon (`scripts/make_icon.swift` → `Resources/AppIcon.icns`), README.
+- **Bug found by end-to-end smoke test: orphaned server after quitting mid-startup.** `MarimoServer.launch` swallowed cancellation and retried, and a server spawned just before quit was never terminated. Fixed: cancellation now terminates the child synchronously and propagates. Verified: quit 3 s into startup leaves 0 servers.
+- **Crash test:** `kill -9` of the app leaves the servers running, as expected. On the next launch they are reaped through `pids.json`, which was verified by process counts (no doubling).
+
+## 2026-11-04 — Stage 7 finished: verification and handoff
+- 24 unit tests plus integration tests (real venv, real server, real kiosk mirror) pass.
+- Real app smoke runs (macOS 26.6, no display capture available in this VM): venv bootstrap; Finder-style multi-file open starts one server per file; the web view loads from its server; session restore; quit leaves 0 servers; quit mid-startup leaves 0; crash then relaunch reaps orphans.
+- **Known issues / not verified (no GUI access in the build VM):**
+  1. Visual appearance (Liquid Glass tab bar, sidebar, inspector) has not been inspected on screen. It compiles and the views are standard SwiftUI.
+  2. ⌘S forwarding into marimo's frontend via a synthetic JS key event has not been observed saving. Marimo's 1 s autosave is the backstop.
+  3. Native dialogs (Open/Save As panels, close-with-unsaved alert) are untested interactively. The file logic beneath them is unit-tested.
+  4. The variable inspector in the running app has not been seen populated. The same client code is proven against live marimo by the integration test.
+  5. Save As restarts the notebook's kernel (see the Stage 3 decision).
+  6. App is ad-hoc signed and not notarised; the first launch on another Mac may need the quarantine attribute cleared (see README).
