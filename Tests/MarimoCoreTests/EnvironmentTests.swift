@@ -100,7 +100,7 @@ func realEnvironmentAndServer() async throws {
     try await env.install(progress: { _, _ in })
     guard case .ready = await env.currentStatus() else { Issue.record("not ready"); return }
     let nb = dir.appending(path: "t.py")
-    let server = try await MarimoServer.launch(file: nb, paths: paths, registry: PIDRegistry(url: paths.pidFile))
+    let server = try await MarimoServer.launch(file: nb, environment: env.defaultInfo, registry: PIDRegistry(url: paths.pidFile))
     #expect(await server.fetchServerToken() != nil)
     server.terminateAndWait()
     #expect(!server.isRunning)

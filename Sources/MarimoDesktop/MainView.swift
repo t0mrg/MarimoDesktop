@@ -37,6 +37,7 @@ struct MainView: View {
             VariablesView(session: model.selectedSession).inspectorColumnWidth(min: 240, ideal: 300, max: 480)
         }
         .toolbar {
+            ToolbarItem(placement: .primaryAction) { EnvironmentPicker(model: model) }
             ToolbarItem(placement: .primaryAction) {
                 Button { showInspector.toggle() } label: { Label("Variables", systemImage: "sidebar.trailing") }
                     .help("Show or hide the variable browser (⌥⌘I)").keyboardShortcut("i", modifiers: [.command, .option])
@@ -55,13 +56,14 @@ struct SessionContent: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .running:
             WebNotebookView(webView: session.webView)
+                .overlay(alignment: .top) { if session.needsRestart { RestartBanner(session: session, model: model) } }
         case .failed(let message):
             VStack(spacing: 12) {
                 Image(systemName: "exclamationmark.triangle.fill").font(.largeTitle).foregroundStyle(.orange)
                 Text("Couldn't run \(session.title)").font(.title3.bold())
                 ScrollView { Text(message).font(.callout.monospaced()).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading) }
                     .frame(maxHeight: 180).padding(10).background(.quaternary, in: .rect(cornerRadius: 12))
-                Button("Retry") { session.start(paths: model.paths, registry: model.pidRegistry) }.buttonStyle(.borderedProminent)
+                Button("Retry") { session.start(registry: model.pidRegistry) }.buttonStyle(.borderedProminent)
             }
             .padding(32).frame(maxWidth: 560).frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -146,5 +148,41 @@ struct WelcomeView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+struct RestartBanner: View {
+    let session: NotebookSession
+    let model: AppModel
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "arrow.triangle.2.circlepath")
+            Text("Packages changed in “\(session.environment.name)”. Restart to apply.").font(.callout)
+            Button("Restart") { session.restart(registry: model.pidRegistry) }.buttonStyle(.glassProminent)
+            Button { session.needsRestart = false } label: { Image(systemName: "xmark") }
+                .buttonStyle(.plain).accessibilityLabel("Dismiss")
+        }
+        .padding(.horizontal, 14).padding(.vertical, 8)
+        .glassEffect(.regular, in: .capsule).padding(.top, 10)
+    }
+}
+
+/// Per-notebook environment menu in the toolbar.
+struct EnvironmentPicker: View {
+    let model: AppModel
+    var body: some View {
+        Menu {
+            ForEach(model.registry.environments) { env in
+                Button { model.assign(env, to: model.selectedSession) } label: {
+                    if env.id == model.selectedSession?.environment.id { Label(env.name, systemImage: "checkmark") } else { Text(env.name) }
+                }
+            }
+            Divider()
+            SettingsLink { Text("Manage Environments…") }
+        } label: {
+            Label(model.selectedSession?.environment.name ?? "Environment", systemImage: "shippingbox")
+        }
+        .disabled(model.selectedSession == nil)
+        .help("Python environment for this notebook")
     }
 }

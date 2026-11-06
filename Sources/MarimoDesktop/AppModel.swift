@@ -14,11 +14,15 @@ final class AppModel {
     let paths: AppPaths
     let environment: PythonEnvironment
     let pidRegistry: PIDRegistry
+    let registryStore: EnvironmentRegistryStore
+    var registry: EnvironmentRegistry
 
     init(paths: AppPaths = .standard) {
         self.paths = paths
         self.environment = PythonEnvironment(paths: paths)
         self.pidRegistry = PIDRegistry(url: paths.pidFile)
+        self.registryStore = EnvironmentRegistryStore(paths: paths)
+        self.registry = EnvironmentRegistryStore(paths: paths).load()
     }
 
     var isReady: Bool { if case .ready = environmentStatus { return true }; return false }
@@ -53,10 +57,10 @@ final class AppModel {
 
     /// Deletes the venv and builds it again. Open notebooks are restarted afterwards.
     func rebuildEnvironment() async {
-        let open = sessions
+        let open = sessions.filter { $0.environment.isDefault }
         open.forEach { $0.stop() }
         try? FileManager.default.removeItem(at: paths.venv)
         await install()
-        if isReady { open.forEach { $0.start(paths: paths, registry: pidRegistry) } }
+        if isReady { open.filter { $0.environment.isDefault }.forEach { $0.start(registry: pidRegistry) } }
     }
 }

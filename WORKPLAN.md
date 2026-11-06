@@ -13,11 +13,11 @@ Status: ☐ todo · ◐ in progress · ☑ done
 | 5 | Git plugin | ☑ |
 | 6 | Polish, persistence, lifecycle hardening | ☑ |
 | 7 | End-to-end verification, release build, handoff | ☑ |
-| 8 | Environment model: registry and PythonEnvironment refactor (v0.2) | ☐ |
-| 9 | PackageManager: list / install / uninstall (v0.2) | ☐ |
-| 10 | Per-notebook environments: launch, picker, restart banner (v0.2) | ☐ |
-| 11 | Packages and Environments UI, faint placeholders (v0.2) | ☐ |
-| 12 | Verification, rebuild, handoff (v0.2) | ☐ |
+| 8 | Environment model: registry and PythonEnvironment refactor (v0.2) | ☑ |
+| 9 | PackageManager: list / install / uninstall (v0.2) | ☑ |
+| 10 | Per-notebook environments: launch, picker, restart banner (v0.2) | ☑ |
+| 11 | Packages and Environments UI, faint placeholders (v0.2) | ☑ |
+| 12 | Verification, rebuild, handoff (v0.2) | ☑ |
 
 ## Stage 0 — Documentation and repository
 - SPECIFICATION.md, WORKPLAN.md, AGENTS.md, SKILLS.md, DEVLOG.md, .gitignore.

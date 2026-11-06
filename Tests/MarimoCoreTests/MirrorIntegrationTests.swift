@@ -14,7 +14,8 @@ final class Box<T>: @unchecked Sendable {
 func mirrorSeesVariablesFromLiveNotebook() async throws {
     let dir = tempDir(); defer { try? FileManager.default.removeItem(at: dir) }
     let paths = AppPaths(root: dir)
-    try await PythonEnvironment(paths: paths).install(progress: { _, _ in })
+    let pyenv = PythonEnvironment(paths: paths)
+    try await pyenv.install(progress: { _, _ in })
     let nb = dir.appending(path: "nb.py")
     try """
     import marimo
@@ -25,7 +26,7 @@ func mirrorSeesVariablesFromLiveNotebook() async throws {
         answer = 42
         return (answer,)
     """.write(to: nb, atomically: true, encoding: .utf8)
-    let server = try await MarimoServer.launch(file: nb, paths: paths, registry: nil)
+    let server = try await MarimoServer.launch(file: nb, environment: pyenv.defaultInfo, registry: nil)
     defer { server.terminateAndWait() }
 
     // Primary client first, as the real web view would be.

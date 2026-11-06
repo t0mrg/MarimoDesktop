@@ -10,6 +10,9 @@ final class NotebookSession: Identifiable {
 
     let id = UUID()
     private(set) var file: URL
+    private(set) var environment: PythonEnvironmentInfo
+    /// Set when packages in this session's environment changed after it started.
+    var needsRestart = false
     private(set) var state: State = .starting
     private(set) var server: MarimoServer?
     let webView: WKWebView
@@ -22,8 +25,9 @@ final class NotebookSession: Identifiable {
 
     var title: String { file.deletingPathExtension().lastPathComponent }
 
-    init(file: URL) {
+    init(file: URL, environment: PythonEnvironmentInfo) {
         self.file = file
+        self.environment = environment
         let config = WKWebViewConfiguration()
         webView = WKWebView(frame: .zero, configuration: config)
         webView.isInspectable = true
@@ -32,15 +36,16 @@ final class NotebookSession: Identifiable {
         webView.setValue(false, forKey: "drawsBackground")
     }
 
-    func start(paths: AppPaths, registry: PIDRegistry) {
+    func start(registry: PIDRegistry) {
         state = .starting
+        needsRestart = false
         stopMirror()
         variables = []
         startTask?.cancel()
-        let file = file
+        let file = file, environment = environment
         startTask = Task { [weak self] in
             do {
-                let server = try await MarimoServer.launch(file: file, paths: paths, registry: registry)
+                let server = try await MarimoServer.launch(file: file, environment: environment, registry: registry)
                 guard let self, !Task.isCancelled else { server.terminate(); return }
                 self.server = server
                 self.navigationDelegate.allowedPort = server.port
@@ -61,11 +66,23 @@ final class NotebookSession: Identifiable {
     }
 
     /// Re-points this tab at another file (after Save As): stop the old server, start a new one.
-    func switchFile(to url: URL, paths: AppPaths, registry: PIDRegistry) {
+    func switchFile(to url: URL, registry: PIDRegistry) {
         stop()
         file = url
-        start(paths: paths, registry: registry)
+        start(registry: registry)
     }
+
+    /// Runs this notebook in another environment (its kernel restarts).
+    func switchEnvironment(to env: PythonEnvironmentInfo, registry: PIDRegistry) {
+        stop()
+        environment = env
+        start(registry: registry)
+    }
+
+    /// Updates display info (e.g. after a rename) without restarting.
+    func refreshEnvironmentInfo(_ env: PythonEnvironmentInfo) { environment = env }
+
+    func restart(registry: PIDRegistry) { stop(); start(registry: registry) }
 
     /// Starts mirroring once the web view has loaded, so the primary session exists first.
     private func startMirror() {

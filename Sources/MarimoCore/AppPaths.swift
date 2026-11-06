@@ -8,6 +8,8 @@ public struct AppPaths: Sendable {
     public var marimoExecutable: URL { venv.appending(path: "bin/marimo") }
     public var pidFile: URL { root.appending(path: "pids.json") }
     public var untitledDirectory: URL { root.appending(path: "Untitled", directoryHint: .isDirectory) }
+    public var envsDirectory: URL { root.appending(path: "envs", directoryHint: .isDirectory) }
+    public var registryFile: URL { root.appending(path: "environments.json") }
     public var sessionFile: URL { root.appending(path: "session.json") }
 
     public init(root: URL) { self.root = root }
@@ -20,5 +22,6 @@ public struct AppPaths: Sendable {
     public func createDirectories() throws {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         try FileManager.default.createDirectory(at: untitledDirectory, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: envsDirectory, withIntermediateDirectories: true)
     }
 }

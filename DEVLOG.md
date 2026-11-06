@@ -65,3 +65,15 @@ Append-only log of stages and key decisions. Format: `## YYYY-MM-DD — title`.
 - **Decision: launch with `python -m marimo`** instead of the `bin/marimo` script. It works for any interpreter (including conda), and removes the shebang-with-space trampoline noted in Stage 3.
 - **Decision: the existing `venv` is adopted as the *Default* environment** (fixed id), so current users keep their packages with no migration.
 - **Decision: spec docs updated first (SPECIFICATION v0.2, WORKPLAN stages 8–12, AGENTS/SKILLS additions).**
+
+## 2026-11-06 — Stages 8–12 finished: packages and environments (v0.2)
+- **Core:** `PythonEnvironmentInfo`, `EnvironmentRegistry` (+ store, fallback to default, purge on remove, duplicate-name/path checks), `PythonEnvironment` generalised (inspect, createManaged with cleanup on failure, deleteManaged restricted to our own `envs/`), `PackageManager` (list/install/uninstall, spec parser, conda-meta detection, marimo protection). `MarimoServer` now launches `python -m marimo` in a given environment.
+- **App:** per-notebook environment (remembered by path, carried across Save As), toolbar picker, "Restart to apply" banner, Settings ▸ Environments (list with badges, packages table with versions/filter/uninstall, install field, New/Link/Rename/Default/Remove), General tab for the Default environment.
+- **Placeholder fix:** every example text now uses `PromptField` (`TextField("", text:, prompt:)` with the label hidden), so the faint example vanishes when typing.
+- **Tests:** 47 unit tests, plus integration tests (real env create → install `six` → list → uninstall → marimo refused). All pass; release build has zero warnings.
+- **Real-app smoke test:** two notebooks opened together ran on two different interpreters (Default venv and a second managed venv assigned to one file); quit left 0 servers.
+- **Decision: uv is used for managed environments, `python -m pip` for linked ones** (with uv only as a fallback when pip is missing, and never retrying a genuine install failure with another tool).
+- **Decision: comma splitting only for plain names.** `numpy>=2,<3` and `pkg[a,b]` stay whole, so version constraints work. Anything starting with `-` is rejected so pip options can't be injected.
+- **Decision: "copy packages from" pins `name==version`** for pip-installed packages (conda-installed ones and marimo are skipped; marimo is installed fresh).
+- **Decision: environments in use by an open tab can't be removed**, and linked environments are only unlinked, never deleted.
+- **Known issues / not verified (no GUI access in the build VM):** the Settings layout, the Table, the alerts and sheets, the toolbar picker and the restart banner have been compiled but not seen on screen. Linking a real conda environment is covered by unit tests (conda-meta, pip commands) but was not exercised against a live conda env, to avoid modifying the user's conda install. A running notebook doesn't pick up new packages until restarted, by design.

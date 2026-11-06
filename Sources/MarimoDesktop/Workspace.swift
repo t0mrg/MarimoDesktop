@@ -26,10 +26,10 @@ extension AppModel {
         let url = url.standardizedFileURL
         guard isReady else { return nil }
         if let existing = sessions.first(where: { $0.file == url }) { selectedID = existing.id; return existing }
-        let session = NotebookSession(file: url)
+        let session = NotebookSession(file: url, environment: registry.environment(for: url))
         sessions.append(session)
         selectedID = session.id
-        session.start(paths: paths, registry: pidRegistry)
+        session.start(registry: pidRegistry)
         if remember { NSDocumentController.shared.noteNewRecentDocumentURL(url) }
         persist()
         return session
@@ -65,7 +65,8 @@ extension AppModel {
         guard panel.runModal() == .OK, let target = panel.url else { return }
         do {
             let dest = try notebookFiles.saveAs(source: session.file, destination: target, overwrite: true) // panel already confirmed overwrite
-            session.switchFile(to: dest, paths: paths, registry: pidRegistry)
+            registry.assign(dest, to: session.environment.id); saveRegistry()   // keep the environment across Save As
+            session.switchFile(to: dest, registry: pidRegistry)
             NSDocumentController.shared.noteNewRecentDocumentURL(dest)
             persist()
         } catch { present(error, title: "Save As failed") }

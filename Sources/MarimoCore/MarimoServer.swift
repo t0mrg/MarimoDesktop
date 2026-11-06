@@ -3,11 +3,13 @@ import Foundation
 public enum ServerError: LocalizedError {
     case exitedEarly(status: Int32, tail: String)
     case timedOut(tail: String)
+    case environmentMissing(String)
 
     public var errorDescription: String? {
         switch self {
         case let .exitedEarly(status, tail): return "Marimo exited during startup (status \(status)).\n\(tail)"
         case let .timedOut(tail): return "Marimo did not become ready in time.\n\(tail)"
+        case .environmentMissing(let path): return "The environment for this notebook is missing or broken:\n\(path)\nPick another environment from the toolbar, or fix it in Settings."
         }
     }
 }
@@ -38,12 +40,15 @@ public final class MarimoServer: @unchecked Sendable {
     }
 
     /// Spawns marimo and waits until `/health` answers. Retries on port races.
-    public static func launch(file: URL, paths: AppPaths, registry: PIDRegistry?,
+    public static func launch(file: URL, environment: PythonEnvironmentInfo, registry: PIDRegistry?,
                               readyTimeout: TimeInterval = 45) async throws -> MarimoServer {
+        guard FileManager.default.isExecutableFile(atPath: environment.python.path) else {
+            throw ServerError.environmentMissing(environment.root.path)
+        }
         var lastError: Error = ServerError.timedOut(tail: "")
         for _ in 0..<3 {
             let port = try PortAllocator.freePort()
-            let server = try start(file: file, port: port, paths: paths, registry: registry)
+            let server = try start(file: file, port: port, environment: environment, registry: registry)
             do {
                 try await server.waitUntilReady(timeout: readyTimeout)
                 return server
@@ -57,14 +62,15 @@ public final class MarimoServer: @unchecked Sendable {
         throw lastError
     }
 
-    private static func start(file: URL, port: Int, paths: AppPaths, registry: PIDRegistry?) throws -> MarimoServer {
+    private static func start(file: URL, port: Int, environment: PythonEnvironmentInfo, registry: PIDRegistry?) throws -> MarimoServer {
         let process = Process()
-        process.executableURL = paths.marimoExecutable
-        process.arguments = arguments(file: file, port: port)
+        process.executableURL = environment.python
+        process.arguments = ["-m", "marimo"] + arguments(file: file, port: port)
         process.currentDirectoryURL = file.deletingLastPathComponent()
         var env = ProcessInfo.processInfo.environment
         for key in ["VIRTUAL_ENV", "PYTHONHOME", "PYTHONPATH", "CONDA_PREFIX"] { env[key] = nil }
-        env["PATH"] = paths.venv.appending(path: "bin").path + ":/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+        env["PATH"] = environment.root.appending(path: "bin").path + ":/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+        if environment.isConda { env["CONDA_PREFIX"] = environment.root.path }
         env["PYTHONUNBUFFERED"] = "1"
         process.environment = env
         let pipe = Pipe()

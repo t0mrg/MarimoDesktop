@@ -21,6 +21,9 @@ MARIMO_INTEGRATION=1 scripts/test.sh         # also runs real-Marimo integration
 ```
 Build products go to `~/.cache/marimodesktop-build` (override with `MD_BUILD_DIR`).
 
+## Packages and environments
+Settings (⌘,) ▸ Environments lists installed packages with versions and lets you install or uninstall them. Create named environments, or link an existing venv/conda folder. Pick the environment per notebook from the toolbar; after package changes, notebooks offer **Restart to apply**.
+
 ## Shortcuts
 ⌘N new · ⌘O open · ⌘S save · ⇧⌘S save as · ⌘W close tab · ⇧⌘[ / ⇧⌘] switch tab · ⌥⌘I variables · ⌘↩ commit (in Git panel)
 
