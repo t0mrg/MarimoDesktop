@@ -11,6 +11,22 @@ A native macOS 26 app for [Marimo](https://marimo.io) notebooks: tabs, native Ne
 - Swift 6.2+ toolchain (Command Line Tools are enough)
 - `uv` (recommended: `brew install uv`) or Python 3.9+. On first launch the app builds a private venv in `~/Library/Application Support/MarimoDesktop/venv` and installs Marimo there. This needs internet access once.
 
+## Install
+
+**Homebrew**
+```bash
+brew install --cask t0mrg/tap/marimo-desktop
+```
+Use the full name above. If Homebrew warns that the tap is untrusted, approve this one cask first:
+```bash
+brew trust --cask t0mrg/tap/marimo-desktop
+```
+
+**Direct download:** get `MarimoDesktop.zip` from the [latest release](https://github.com/t0mrg/MarimoDesktop/releases/latest), unzip it, and move the app to Applications. The app is not notarised yet, so macOS may block the first launch. Right-click the app and choose **Open**, or run:
+```bash
+xattr -dr com.apple.quarantine /Applications/MarimoDesktop.app
+```
+
 ## Build and run
 ```bash
 scripts/build_app.sh                 # builds build/MarimoDesktop.app (ad-hoc signed)
