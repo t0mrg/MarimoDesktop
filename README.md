@@ -1,5 +1,9 @@
 # Marimo Desktop
 
+[![Download](https://img.shields.io/badge/Download-macOS%20app-blue?logo=apple&logoColor=white)](https://github.com/t0mrg/MarimoDesktop/releases/latest/download/MarimoDesktop.zip)
+[![Latest release](https://img.shields.io/github/v/release/t0mrg/MarimoDesktop)](https://github.com/t0mrg/MarimoDesktop/releases/latest)
+![macOS 26+](https://img.shields.io/badge/macOS-26%2B-black?logo=apple)
+
 A native macOS 26 app for [Marimo](https://marimo.io) notebooks: tabs, native New/Open/Save As, a live variable browser and a Git panel.
 
 ## Requirements
