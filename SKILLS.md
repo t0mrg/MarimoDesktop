@@ -49,3 +49,11 @@ Step-by-step playbooks. Follow the matching one instead of improvising. All rule
 2. Verify with `codesign --verify --deep --strict build/MarimoDesktop.app`, then launch it.
 3. If Gatekeeper blocks it: `xattr -dr com.apple.quarantine build/MarimoDesktop.app`.
 4. Give the user: `open "<abs path>/build/MarimoDesktop.app"`.
+
+## Skill 8 — Package and environment management
+- Environments are `PythonEnvironmentInfo` values; always address Python as `<root>/bin/python` and run Marimo as `python -m marimo`, never the `marimo` script (its shebang breaks on paths with spaces).
+- Package operations go through `PackageManager` only. Never build pip/uv command lines in views. Inputs are tokenized and validated (reject leading `-`), and passed as argument arrays.
+- Managed envs: prefer `uv pip … --python <py>`. Linked envs (venv/conda): prefer `python -m pip`, never use conda commands, and never modify anything on unlink/remove.
+- Marimo itself must never be uninstallable from the UI. Conda-installed packages (found in `<root>/conda-meta`) are shown read-only.
+- After a change, mark the sessions using that environment `needsRestart`. Never restart them silently.
+- Test with the fake runner for commands, fixtures for list output, and a gated real-environment test (`MARIMO_INTEGRATION=1`) that installs and removes `six`.

@@ -13,6 +13,11 @@ Status: ☐ todo · ◐ in progress · ☑ done
 | 5 | Git plugin | ☑ |
 | 6 | Polish, persistence, lifecycle hardening | ☑ |
 | 7 | End-to-end verification, release build, handoff | ☑ |
+| 8 | Environment model: registry and PythonEnvironment refactor (v0.2) | ☐ |
+| 9 | PackageManager: list / install / uninstall (v0.2) | ☐ |
+| 10 | Per-notebook environments: launch, picker, restart banner (v0.2) | ☐ |
+| 11 | Packages and Environments UI, faint placeholders (v0.2) | ☐ |
+| 12 | Verification, rebuild, handoff (v0.2) | ☐ |
 
 ## Stage 0 — Documentation and repository
 - SPECIFICATION.md, WORKPLAN.md, AGENTS.md, SKILLS.md, DEVLOG.md, .gitignore.
@@ -58,3 +63,30 @@ Status: ☐ todo · ◐ in progress · ☑ done
 - Run the acceptance checklist. Build the release `.app`. Write the README run instructions.
 - Update the DEVLOG with known issues.
 - **Done when:** the user-facing launch command is provided.
+
+---
+
+# Phase 2 — Package and environment management (v0.2)
+
+## Stage 8 — Environment model
+- `PythonEnvironmentInfo` (id, name, kind managed/linked, root), `EnvironmentRegistry` (+ store): default *Default* env pointing at the existing `venv`, add/rename/remove/validate, per-file assignments, fallback to default.
+- Refactor `PythonEnvironment` so create, install and inspect take an environment root. The existing default-env behaviour is unchanged. `MarimoServer` launches with `python -m marimo` in a given environment.
+- **Tests:** registry rules and round-trip, name validation, slug uniqueness, creation commands, launch arguments. Existing integration tests still pass.
+- **Done when:** the registry and the creation/inspection logic are covered by unit tests and the old flows still work.
+
+## Stage 9 — PackageManager
+- `list` (parse pip and uv JSON, tolerate noise), `install` (spec tokenizing and validation), `uninstall`, backend choice (uv vs pip, linked prefers pip), conda-meta detection, marimo protection.
+- **Tests:** parsers with fixtures, commands via the fake runner, validation. **Integration (gated):** create an env, install and uninstall `six`.
+- **Done when:** the whole package lifecycle works against a real environment.
+
+## Stage 10 — Per-notebook environments
+- `NotebookSession` carries its environment. Open and restore resolve the assignment. Switching environment restarts that tab. Toolbar picker. "Restart to apply" banner driven by package changes.
+- **Done when:** two tabs run in two different environments at once.
+
+## Stage 11 — UI
+- Settings ▸ Environments (list + detail): packages table with filter/uninstall, install field, new/link/rename/default/remove. General tab keeps Marimo update and tool paths.
+- Replace every placeholder-as-label with a real faint prompt (FR-UI-5).
+- **Done when:** FR-PKG and FR-ENVR are all covered in the UI.
+
+## Stage 12 — Verification and handoff
+- Run acceptance items 8–9, smoke-test the real app (processes, restore, quit), rebuild the `.app`, update the DEVLOG with known issues.

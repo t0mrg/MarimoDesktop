@@ -1,6 +1,6 @@
 # Marimo Desktop — Specification
 
-Version 0.1 · 2026-11-04
+Version 0.2 · 2026-11-06
 
 ## 1. Purpose
 
@@ -14,6 +14,10 @@ Marimo Desktop is a native macOS app that wraps the Python [Marimo](https://mari
 | Variable browser | **Native SwiftUI inspector** fed live from each running notebook (see §6). |
 | Platform | **macOS 26 (Tahoe)**, Swift 6, SwiftUI with AppKit where needed, Liquid Glass styling. |
 | Build | **Swift Package Manager** plus `scripts/build_app.sh`, which assembles and ad-hoc signs `MarimoDesktop.app`. No `.xcodeproj`. |
+| Environments (v0.2) | **Managed + linked.** Named managed venvs live in `…/MarimoDesktop/envs/`. Existing venv or conda environments can be linked by folder. The original `venv` becomes the environment named *Default*. |
+| Environment choice (v0.2) | **Per notebook, remembered by file path.** New notebooks use the default environment. Switching restarts that notebook's kernel. |
+| Package changes (v0.2) | Notebooks using the changed environment show **Restart to apply**. Nothing restarts automatically. |
+| Package backend (v0.2) | `uv pip` for managed environments when uv exists, otherwise `python -m pip`. Linked environments prefer `python -m pip` (conda: pip only; conda-installed packages are listed but cannot be uninstalled here). |
 | Git plugin | **Core workflow** via the `git` CLI: branch, status, diff, stage/unstage, commit, log, pull/push. |
 
 ## 3. Architecture
@@ -21,7 +25,9 @@ Marimo Desktop is a native macOS app that wraps the Python [Marimo](https://mari
 ```
 MarimoDesktop (executable, SwiftUI App)
  └─ MarimoCore (library, UI-free, unit-tested)
-      ├─ PythonEnvironment   locate uv/python, create venv, install/upgrade marimo
+      ├─ PythonEnvironment   locate uv/python, create venvs, inspect health, install/upgrade marimo
+      ├─ EnvironmentRegistry named environments, default, per-notebook assignments (persisted)
+      ├─ PackageManager      list / install / uninstall packages in one environment
       ├─ MarimoServer        one `marimo edit --headless` process per open notebook
       ├─ PortAllocator       free localhost ports
       ├─ NotebookTemplate    new-notebook source
@@ -77,6 +83,22 @@ MarimoDesktop (executable, SwiftUI App)
 - FR-UI-2: `NavigationSplitView` layout: sidebar (Git), content (tab bar + notebook), inspector (Variables).
 - FR-UI-3: Full menu bar (File, Edit, View, Notebook, Window, Help) with standard shortcuts. Welcome screen with recent files when no tabs are open.
 - FR-UI-4: Native alerts for errors. Nothing fails silently.
+- FR-UI-5: Example text in any input is a **faint placeholder that disappears when the user types**. It must never be a visible label beside the typed text. In SwiftUI use `TextField("", text:, prompt: Text("e.g. …"))` with the label hidden.
+
+### 4.7 Packages and environments (FR-PKG, FR-ENVR)
+- FR-PKG-1: Settings ▸ Environments shows, for the selected environment, every installed package with its **name and version**, sorted by name, with a filter field and a count.
+- FR-PKG-2: **Install**: a text field accepts one or more package specs separated by spaces or commas (`pandas`, `numpy>=2`, `altair[all]`). Install runs with live log output, a progress indicator and a clear error on failure. The list refreshes afterwards.
+- FR-PKG-3: **Uninstall**: a per-row button (with confirmation) removes a package, and multi-select removes several. `marimo` cannot be uninstalled (the button is disabled, with an explanation). Packages installed by conda are listed but not removable, with an explanation.
+- FR-PKG-4: Spec input is validated. Tokens starting with `-` (pip options) are rejected, and empty input disables the Install button.
+- FR-PKG-5: After any install or uninstall, open notebooks that use that environment show a **Restart to apply** banner with a Restart button.
+- FR-PKG-6: Install and list work on linked environments the same way (pip).
+- FR-ENVR-1: The Environments list shows each environment's name, kind (Managed / Linked / conda badge), Python version, Marimo version, and the number of open notebooks using it.
+- FR-ENVR-2: **New environment** (managed): name (validated, unique), optional "copy packages from" an existing environment. It creates a venv and installs Marimo, with progress.
+- FR-ENVR-3: **Link existing…** picks a folder (a venv, or a conda env such as `…/miniconda3/envs/foo`). The app checks that `bin/python` runs. If Marimo is missing it offers to install it into that environment.
+- FR-ENVR-4: **Rename**, **Set as default**, and **Remove**. Removing a managed environment deletes its folder after confirmation. Removing a linked one only unlinks it and never touches its files. The default environment and any environment used by an open tab cannot be removed. Notebooks that had a removed environment fall back to the default.
+- FR-ENVR-5: The toolbar has an environment picker for the active notebook (checkmark on current), plus *Manage Environments…*. Choosing another environment saves the assignment for that file and restarts that notebook.
+- FR-ENVR-6: Notebooks are launched with `<env>/bin/python -m marimo edit …` (not the `marimo` script), and `CONDA_PREFIX` is set for conda environments.
+- FR-ENVR-7: Environment registry and assignments persist across launches. A missing environment folder is reported as an error on the tab, never silently replaced.
 
 ## 5. Non-functional requirements
 - NFR-1: Notebook cold start under 5 s once the environment exists.
@@ -90,7 +112,7 @@ MarimoDesktop (executable, SwiftUI App)
 Marimo's server accepts extra WebSocket clients in **kiosk mode** (`/ws?session_id=…&file=…&kiosk=true`). A kiosk client mirrors the live session without owning it. The kernel broadcasts `variables` (names, declaring cells) and `variable-values` (type and preview) messages. `VariableMirror` is that client. Each notebook session therefore feeds the native inspector without code injection or patching Marimo. If kiosk mirroring turns out to be unavailable in some Marimo version, the fallback is a small bootstrap Python module loaded with the venv's `PYTHONPATH`. Any change to this decision is recorded in DEVLOG.md.
 
 ## 7. Out of scope (v1)
-App Store distribution and notarization, multi-window, a Marimo app (run mode) gallery, Windows/Linux, a built-in code editor, Git branching beyond switching.
+App Store distribution and notarization, multi-window, a Marimo app (run mode) gallery, Windows/Linux, a built-in code editor, Git branching beyond switching. Using `conda`/`mamba` commands to manage packages, `pyproject`/lockfile based project environments, and Marimo's `--sandbox` mode.
 
 ## 8. Acceptance criteria
 1. `scripts/build_app.sh` produces `build/MarimoDesktop.app`, which launches on macOS 26.
@@ -100,3 +122,5 @@ App Store distribution and notarization, multi-window, a Marimo app (run mode) g
 5. Variables defined in a notebook appear in the inspector within about 1 s of running the cell.
 6. In a Git repo, a change can be viewed, staged, committed and pushed from the panel.
 7. `swift test` passes. Quitting leaves no `marimo` processes running.
+8. (v0.2) Create an environment, install `six`, see it listed with its version, uninstall it, and see it disappear. Two notebooks can use two different environments at the same time. A linked conda or venv environment works. The picker and the Restart banner behave as in FR-ENVR-5 and FR-PKG-5.
+9. (v0.2) Typing into any install or name field replaces the faint example text.

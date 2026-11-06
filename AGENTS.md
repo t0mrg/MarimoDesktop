@@ -31,6 +31,7 @@ Instructions for any AI agent (or human) working in this repository. Read SPECIF
 - System fonts, SF Symbols, semantic colors (`.primary`, `.secondary`, `Color(nsColor:)`), and both light and dark mode. Respect Reduce Transparency and Reduce Motion.
 - Standard macOS idioms: menu-bar commands with shortcuts, `NavigationSplitView`, `.inspector`, sheets for modal flows, native alerts for errors.
 - Accessibility labels on every icon-only control.
+- **Placeholders:** example text in inputs must be a real faint prompt that vanishes on typing: `TextField("", text: $x, prompt: Text("e.g. …")).labelsHidden()`. Never pass the example as the title of a `TextField` inside a `Form` (it renders as a label beside the text).
 
 ## 5. Testing rules
 - New logic ships with tests (Swift Testing or XCTest, whichever the installed toolchain supports). A bug fix adds a regression test first.

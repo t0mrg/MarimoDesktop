@@ -57,3 +57,11 @@ Append-only log of stages and key decisions. Format: `## YYYY-MM-DD — title`.
   4. The variable inspector in the running app has not been seen populated. The same client code is proven against live marimo by the integration test.
   5. Save As restarts the notebook's kernel (see the Stage 3 decision).
   6. App is ad-hoc signed and not notarised; the first launch on another Mac may need the quarantine attribute cleared (see README).
+
+## 2026-11-06 — Phase 2 started: package and environment management (v0.2)
+- Request: list installed packages with versions, uninstall, install, faint replace-on-type placeholders everywhere, and (optional) multiple environments.
+- User answers: **managed + linked** environments; **per-notebook** choice, remembered; **warn and offer restart** after package changes; **pip only** for conda envs.
+- Root cause of the placeholder complaint: the Settings field was `TextField("e.g. …", text:)` inside a grouped `Form`, which SwiftUI renders as a *label beside* the value. The fix is the `prompt:` parameter with the label hidden. Recorded as FR-UI-5 and an AGENTS.md rule.
+- **Decision: launch with `python -m marimo`** instead of the `bin/marimo` script. It works for any interpreter (including conda), and removes the shebang-with-space trampoline noted in Stage 3.
+- **Decision: the existing `venv` is adopted as the *Default* environment** (fixed id), so current users keep their packages with no migration.
+- **Decision: spec docs updated first (SPECIFICATION v0.2, WORKPLAN stages 8–12, AGENTS/SKILLS additions).**
